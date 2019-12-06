@@ -19,12 +19,12 @@ Library
   exposed-modules:     BlockchainsQueryApi
                      , BlockchainsQueryApi.Client
                      , BlockchainsQueryApi.Parity
+                     , BlockchainsQueryApi.Haskoin
   other-modules:       BlockchainsQueryApi.Prelude
                      , BlockchainsQueryApi.Api
                      , BlockchainsQueryApi.AppM
                      , BlockchainsQueryApi.Handlers
                      , BlockchainsQueryApi.Domain
-                     , BlockchainsQueryApi.Haskoin
   build-depends:       base >= 4.7 && < 5
                      , protolude >= 0.2.3
                      , aeson
