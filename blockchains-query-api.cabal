@@ -1,0 +1,101 @@
+name:                blockchains-query-api
+version:             0.1.0.0
+-- synopsis:
+-- description:
+homepage:            https://github.com/Coinberry/blockchains-query-api
+license:             MIT
+license-file:        LICENSE
+author:              Diogo Biazus
+maintainer:          diogo.biazus@coinberry.com
+copyright:           2019 Coinberry Limited
+category:            Web
+build-type:          Simple
+extra-source-files:  README.md
+cabal-version:       >=1.10
+
+Library
+  hs-source-dirs:      src
+  ghc-options:         -Wall
+  exposed-modules:     BlockchainsQueryApi
+                     , BlockchainsQueryApi.Client
+                     , BlockchainsQueryApi.Parity
+  other-modules:       BlockchainsQueryApi.Prelude
+                     , BlockchainsQueryApi.Api
+                     , BlockchainsQueryApi.AppM
+                     , BlockchainsQueryApi.Handlers
+                     , BlockchainsQueryApi.Domain
+                     , BlockchainsQueryApi.Haskoin
+  build-depends:       base >= 4.7 && < 5
+                     , protolude >= 0.2.3
+                     , aeson
+                     , either
+                     , vector
+                     , hasql >= 1.1.1 && < 1.5
+                     , hasql-pool >= 0.4.3 && < 0.6
+                     , fast-logger
+                     , envparse
+                     , websockets
+                     , auto-update
+                     , time
+                     , auto-update
+                     , monad-time
+                     , fast-logger
+                     , servant-server
+                     , servant-swagger
+                     , servant-client
+                     , http-types
+                     , swagger2
+                     , lens
+                     , lens-aeson
+                     , http-conduit
+                     , scientific
+                     , network-uri
+                     , conduit
+                     , regex-tdfa
+                     , http-client
+                     , aeson-qq
+                     , either
+
+  default-language:    Haskell2010
+  default-extensions:  OverloadedStrings, NoImplicitPrelude, LambdaCase
+
+executable blockchains-query-api
+  hs-source-dirs:      app
+  main-is:             Main.hs
+  ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
+  build-depends:       base
+                     , blockchains-query-api
+                     , protolude >= 0.2.3
+                     , warp
+  default-language:    Haskell2010
+  default-extensions:  OverloadedStrings, NoImplicitPrelude
+
+test-suite blockchains-query-api-test
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             Main.hs
+  build-depends:       base
+                     , blockchains-query-api
+                     , protolude >= 0.2.3
+                     , hspec
+                     , hasql >= 1.1.1 && < 1.5
+                     , hasql-pool >= 0.4.3 && < 0.6
+                     , vector
+                     , hspec-wai
+                     , hspec-wai-json
+                     , aeson
+                     , http-types
+                     , aeson-qq
+                     , network-uri
+                     , process
+
+  other-modules:       BTCApiSpec
+                     , ETHApiSpec
+                     , ParitySpec
+  ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
+  default-language:    Haskell2010
+  default-extensions:  OverloadedStrings, NoImplicitPrelude
+
+source-repository head
+  type:     git
+  location: https://github.com/Coinberry/blockchains-query-api
