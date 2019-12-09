@@ -39,10 +39,10 @@ getFeeEstimate :: (MonadIO m,  MonadThrow m) => URI -> m (Either Error FeeEstima
 getFeeEstimate uri = undefined
 
 getCurrentBlock :: (MonadIO m,  MonadThrow m) => URI -> m (Either Error Block)
-getCurrentBlock uri = do
-    responseOrError <- mkRequest uri "eth_getBlockByNumber" [aesonQQ| ["latest", true] |]
-    pure $ either (Left . RPCError . show) identity $ blockOrFailure <$> responseOrError
+getCurrentBlock uri =
+    responseOrError <$> mkRequest uri "eth_getBlockByNumber" [aesonQQ| ["latest", true] |]
     where
+        responseOrError = either (Left . RPCError . show) blockOrFailure
         blockOrFailure :: Value -> Either Error Block
         blockOrFailure body =
             maybe (Left $ RPCError $ toS $ "Error decoding: " <> encode body) Right (responseToBlock body)
@@ -57,10 +57,10 @@ getCurrentBlock uri = do
             pure $ Block rId rNumberNumeric transactions
 
 getBalance :: (MonadIO m,  MonadThrow m) => URI -> Address -> m (Either Error Balance)
-getBalance uri address = do
-    responseOrError <- mkRequest uri "eth_getBalance" [aesonQQ| [#{address}] |]
-    pure $ either (Left . RPCError . show) identity $ balanceOrFailure <$> responseOrError
+getBalance uri address =
+    responseOrError <$> mkRequest uri "eth_getBalance" [aesonQQ| [#{address}] |]
     where
+        responseOrError = either (Left . RPCError . show) balanceOrFailure
         balanceOrFailure :: Value -> Either Error Balance
         balanceOrFailure body =
             maybe (Left $ RPCError $ toS $ "Error decoding: " <> encode body) Right (responseToBalance body)
