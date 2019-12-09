@@ -72,14 +72,14 @@ getBalance uri address = do
             pure $ Balance address rBalanceNumeric
 
 getTransaction :: (MonadIO m,  MonadThrow m) => URI -> Text -> m (Either Error Tx)
-getTransaction uri paramHash = do
-    responseOrError <- mkRequest uri "eth_getTransactionByHash" [aesonQQ| [#{paramHash}] |]
-    pure $ 
-        either 
-            (const $ Left $ NotFound ("Could not find the hash " <> paramHash <> " in parity")) 
-            identity 
-            $ txOrFailure <$> responseOrError
+getTransaction uri paramHash =
+    responseOrError <$> mkRequest uri "eth_getTransactionByHash" [aesonQQ| [#{paramHash}] |]
     where
+        responseOrError =
+            either 
+            (const $ Left $ NotFound ("Could not find the hash " <> paramHash <> " in parity")) 
+            txOrFailure 
+
         txOrFailure :: Value -> Either Error Tx
         txOrFailure = successfulResponse >=> parseTx
         
