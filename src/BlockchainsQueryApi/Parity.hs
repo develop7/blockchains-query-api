@@ -3,7 +3,7 @@
 module BlockchainsQueryApi.Parity
     ( parity
     -- exported for text only
-    , responseToTx
+    , parseTx
     ) where
 
 import BlockchainsQueryApi.Prelude
@@ -11,12 +11,11 @@ import BlockchainsQueryApi.Domain
 import Data.Aeson.TH (deriveJSON, defaultOptions, fieldLabelModifier)
 import Data.Aeson.Lens
 import Data.Aeson
-import Control.Lens ((^?))
+import Control.Lens ((^?), preview)
 import Network.URI
 import Network.HTTP.Simple
 import Conduit (MonadThrow)
 import Data.Aeson.QQ
-import Data.Either.Combinators (mapLeft)
 
 data ParityRequest =
     ParityRequest
@@ -54,7 +53,7 @@ getCurrentBlock uri = do
             rNumber <- body  ^? key "result" . key "number" . _String
             rNumberNumeric <- fromIntegral <$> (readMaybe $ toS rNumber :: Maybe Integer)
             rTransactionValues <- body  ^? key "result" . key "transactions" . _Array
-            let transactions = mapMaybe responseToTx $ toList rTransactionValues
+            let transactions = mapMaybe (rightToMaybe . parseTx) $ toList rTransactionValues
             pure $ Block rId rNumberNumeric transactions
 
 getBalance :: (MonadIO m,  MonadThrow m) => URI -> Address -> m (Either Error Balance)
@@ -82,10 +81,7 @@ getTransaction uri paramHash = do
             $ txOrFailure <$> responseOrError
     where
         txOrFailure :: Value -> Either Error Tx
-        txOrFailure body =
-            case body  ^? key "result" . key "hash" . _String of
-                Nothing -> Left $ NotFound ""
-                _ -> maybe (Left $ RPCError $ toS $ "Error decoding: " <> encode body) Right (responseToTx body)
+        txOrFailure = successfulResponse >=> parseTx
         
 mkRequest :: (MonadIO m,  MonadThrow m) => URI -> Text -> Value -> m (Either Error Value)
 mkRequest uri method params = do 
@@ -98,23 +94,32 @@ mkRequest uri method params = do
         parityRequest :: ParityRequest
         parityRequest = ParityRequest method params 2 "2.0"
 
-responseToTx :: Value -> Maybe Tx
-responseToTx body = do
-    rTxId <- body  ^? key "result" . key "hash" . _String
-    rFrom <- body  ^? key "result" . key "from" . _String
-    rTo <- body  ^? key "result" . key "to" . _String
+successfulResponse :: Value -> Either Error Value
+successfulResponse = maybeToEither (NotFound "Has no result key") . hasResult
+    where
+        hasResult  :: Value -> Maybe Value
+        hasResult = preview $ key "result"
 
-    rGasPrice <- body ^? key "result" . key "gasPrice" . _String
-    rGasPriceNumeric <- fromIntegral <$> (readMaybe $ toS rGasPrice :: Maybe Integer)
-    rGas <- body ^? key "result" . key "gas" . _String
-    rGasNumeric <- fromIntegral <$> (readMaybe $ toS rGas :: Maybe Integer)
-    rValue <- body ^? key "result" . key "value" . _String
-    rValueNumeric <- fromIntegral <$> (readMaybe $ toS rValue :: Maybe Integer)
+parseTx :: Value -> Either Error Tx
+parseTx = maybeToEither (NotFound "Error decoding Tx") . hasTx
+    where 
+        hasTx :: Value -> Maybe Tx
+        hasTx body = do
+            rTxId <- body ^? key "hash" . _String
+            rFrom <- body ^? key "from" . _String
+            rTo <- body ^? key "to" . _String
 
-    let fee = rGasPriceNumeric * rGasNumeric
-    pure Tx
-        { txHash = rTxId
-        , txFee = fee
-        , txFrom = [Balance rFrom (rValueNumeric + fee)]
-        , txTo = [Balance rTo rValueNumeric]
-        }
+            rGasPrice <- body ^? key "gasPrice" . _String
+            rGasPriceNumeric <- fromIntegral <$> (readMaybe $ toS rGasPrice :: Maybe Integer)
+            rGas <- body ^? key "gas" . _String
+            rGasNumeric <- fromIntegral <$> (readMaybe $ toS rGas :: Maybe Integer)
+            rValue <- body ^? key "value" . _String
+            rValueNumeric <- fromIntegral <$> (readMaybe $ toS rValue :: Maybe Integer)
+
+            let fee = rGasPriceNumeric * rGasNumeric
+            pure Tx
+                { txHash = rTxId
+                , txFee = fee
+                , txFrom = [Balance rFrom (rValueNumeric + fee)]
+                , txTo = [Balance rTo rValueNumeric]
+                }
