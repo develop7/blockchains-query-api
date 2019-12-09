@@ -31,7 +31,13 @@ spec =
                     get "/btc/tx/0ce33f35bd4c6ec6ddb96ec54d6ae2e943a4bf1fdba4189650d35ed81d11b9d7" `shouldRespondWith` [json|{"hash":"0ce33f35bd4c6ec6ddb96ec54d6ae2e943a4bf1fdba4189650d35ed81d11b9d7","fee":24400,"from":[{"address":"1A7tWftaGHohhGcJMVkkm4zAYnF53KjRnU", "value":83472149},{"address":"1A7tWftaGHohhGcJMVkkm4zAYnF53KjRnU","value":2000000000}],"to":[{"address":"3DNAeaFJDM7Rt77T3MdugHg7f8wH3g8ern","value":1234827256},{"address":"37epBQNkx9785XVVnRWPLWs8iDhPSauiAw","value":105153447},{"address":"1A7tWftaGHohhGcJMVkkm4zAYnF53KjRnU","value":743467046}]}|]
                 it "responds with 500 if node has no uri configured" $
                     get "/bch/tx/0ce33f35bd4c6ec6ddb96ec54d6ae2e943a4bf1fdba4189650d35ed81d11b9d7" `shouldRespondWith` 500
-
+            describe "GET /:currency/fee-estimate" $
+                it "responds with 200 and block information" $
+                    get "/btc/fee-estimate" `shouldRespondWith` 200
+            xdescribe "GET /:currency/current-block (we should set a test node before enabling this)" $
+                it "responds with 200 and block information" $
+                    get "/btc/current-block" `shouldRespondWith` 200
+    
     where
         conf = BTConfig 
                 { port = 8080

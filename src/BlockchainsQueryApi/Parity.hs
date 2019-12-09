@@ -36,7 +36,19 @@ parity uri = Node
                 }
 
 getFeeEstimate :: (MonadIO m,  MonadThrow m) => URI -> m (Either Error FeeEstimate)
-getFeeEstimate uri = undefined
+getFeeEstimate uri =
+    responseOrError <$> mkRequest uri "eth_gasPrice" [aesonQQ| [] |]
+    where
+        responseOrError = either (Left . RPCError . show) blockOrFailure
+        blockOrFailure :: Value -> Either Error FeeEstimate
+        blockOrFailure body =
+            maybeToEither (RPCError $ toS $ "Error decoding: " <> encode body) (responseToBlock body)
+
+        responseToBlock :: Value -> Maybe FeeEstimate
+        responseToBlock body = do
+            rGasPrice <- body  ^? key "result" . _String
+            rGasPriceNumeric <- fromIntegral <$> (readMaybe $ toS rGasPrice :: Maybe Integer)
+            pure $ FeeEstimate ETH rGasPriceNumeric
 
 getCurrentBlock :: (MonadIO m,  MonadThrow m) => URI -> m (Either Error Block)
 getCurrentBlock uri =
@@ -45,7 +57,7 @@ getCurrentBlock uri =
         responseOrError = either (Left . RPCError . show) blockOrFailure
         blockOrFailure :: Value -> Either Error Block
         blockOrFailure body =
-            maybe (Left $ RPCError $ toS $ "Error decoding: " <> encode body) Right (responseToBlock body)
+            maybeToEither (RPCError $ toS $ "Error decoding: " <> encode body) (responseToBlock body)
 
         responseToBlock :: Value -> Maybe Block
         responseToBlock body = do
@@ -63,7 +75,7 @@ getBalance uri address =
         responseOrError = either (Left . RPCError . show) balanceOrFailure
         balanceOrFailure :: Value -> Either Error Balance
         balanceOrFailure body =
-            maybe (Left $ RPCError $ toS $ "Error decoding: " <> encode body) Right (responseToBalance body)
+            maybeToEither (RPCError $ toS $ "Error decoding: " <> encode body) (responseToBalance body)
 
         responseToBalance :: Value -> Maybe Balance
         responseToBalance body = do

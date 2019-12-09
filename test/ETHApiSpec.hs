@@ -46,7 +46,9 @@ spec =
                                     Eth.withParam (Eth.to .~ me) $ Eth.send ()
                     let testTxHash = toText $ Eth.receiptTransactionHash (either (panic "Error setting up eth test") identity ret)
                     get ("/eth/tx/" <> toS testTxHash) `shouldRespondWith` 200
-
+            describe "GET /:currency/fee-estimate" $
+                it "responds with 200 and block information" $
+                    get "/eth/fee-estimate" `shouldRespondWith` 200
             describe "GET /:currency/current-block" $
                 it "responds with 200 and block information" $
                     get "/eth/current-block" `shouldRespondWith` 200
