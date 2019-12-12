@@ -21,14 +21,25 @@ haskoin uri = Node
                 }
 
 getFeeEstimate :: (MonadIO m,  MonadThrow m) => URI -> m (Either Error FeeEstimate)
-getFeeEstimate uri = undefined
+getFeeEstimate uri = do
+    (status, jsonBody) <- mkRequest uriToString'
+    pure $ case status of
+        200 -> maybeToEither (RPCError "Invalid block body") (responseToBlock jsonBody)
+        _ -> Left $ RPCError $ "Some other error, haskoin response status: " <> show status
+    where
+        responseToBlock :: Value -> Maybe FeeEstimate
+        responseToBlock body = do
+            rSize <- fromInteger <$> body ^? key "size" . _Integer
+            rFees <- fromInteger <$> body ^? key "fees" . _Integer
+            pure $ FeeEstimate BTC (rFees / rSize)
+        uriToString' = "GET " <> uriToString identity uri "" <> "/block/best"
 
 getCurrentBlock :: (MonadIO m,  MonadThrow m) => URI -> m (Either Error Block)
 getCurrentBlock uri = do
     (status, jsonBody) <- mkRequest uriToString'
     txsAttempts <- mapM (getTransaction uri) (txIds jsonBody)
     pure $ case (status, sequence txsAttempts) of
-        (200, Right txs) -> maybe (Left $ RPCError "Invalid block body") Right (responseToBlock jsonBody txs)
+        (200, Right txs) -> maybeToEither (RPCError "Invalid block body") (responseToBlock jsonBody txs)
         _ -> Left $ RPCError $ "Some other error, haskoin response status: " <> show status
     where
         txIds :: Value -> [Text]
@@ -46,7 +57,7 @@ getBalance :: (MonadIO m,  MonadThrow m) => URI -> Address -> m (Either Error Ba
 getBalance uri address = do
     (status, jsonBody) <- mkRequest uriToString'
     pure $ case status of
-        200 -> maybe (Left $ RPCError "Invalid balance body") Right (responseToBalance jsonBody)
+        200 -> maybeToEither (RPCError "Invalid balance body") (responseToBalance jsonBody)
         404 -> Left $ NotFound ("Could not find the address " <> toS address <> " in Haskoin")
         _ -> Left $ RPCError $ "Some other error, haskoin response status: " <> show status
     where
@@ -62,7 +73,7 @@ getTransaction :: (MonadIO m,  MonadThrow m) => URI -> Text -> m (Either Error T
 getTransaction uri paramHash = do
     (status, jsonBody) <- mkRequest uriToString'
     pure $ case status of
-        200 -> maybe (Left $ RPCError "Invalid transaction body") Right (responseToTx jsonBody)
+        200 -> maybeToEither (RPCError "Invalid transaction body") (responseToTx jsonBody)
         404 -> Left $ NotFound ("Could not find the hash " <> toS paramHash <> " in Haskoin")
         _ -> Left $ RPCError $ "Some other error, haskoin response status: " <> show status
     where
