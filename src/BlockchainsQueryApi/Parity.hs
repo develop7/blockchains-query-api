@@ -70,7 +70,7 @@ getCurrentBlock uri =
 
 getBalance :: (MonadIO m,  MonadThrow m) => URI -> Address -> m (Either Error Balance)
 getBalance uri address =
-    responseOrError <$> mkRequest uri "eth_getBalance" [aesonQQ| [#{address}] |]
+    responseOrError <$> mkRequest uri "eth_getBalance" [aesonQQ| [#{address}, "pending"] |]
     where
         responseOrError = either (Left . RPCError . show) balanceOrFailure
         balanceOrFailure :: Value -> Either Error Balance

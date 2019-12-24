@@ -67,7 +67,8 @@ responseToBalance :: Value -> Maybe Balance
 responseToBalance body = do
     rAddress <- body  ^? key "address" . _String
     rConfirmed <- body  ^? key "confirmed" . _Integer
-    pure $ Balance rAddress rConfirmed
+    rUnconfirmed <- body  ^? key "unconfirmed" . _Integer
+    pure $ Balance rAddress (rConfirmed + rUnconfirmed)
 
 getTransaction :: (MonadIO m,  MonadThrow m) => URI -> Text -> m (Either Error Tx)
 getTransaction uri paramHash = do
