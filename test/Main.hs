@@ -9,13 +9,17 @@ import qualified BTCApiSpec as BTC
 import qualified ETHApiSpec as ETH
 import qualified ParitySpec as Parity
 
+import qualified RippleSpec as Ripple
+
 main :: IO ()
 main = do
     withParity $
         hspecWith defaultConfig ETH.spec
     hspecWith defaultConfig specsWithoutMockServer
+    hspecWith defaultConfig specsWithoutMockServer2    
     where
         specsWithoutMockServer = BTC.spec >> Parity.spec
+        specsWithoutMockServer2 = Ripple.spec >> Parity.spec        
 
 withParity :: IO () -> IO ()
 withParity action = 
