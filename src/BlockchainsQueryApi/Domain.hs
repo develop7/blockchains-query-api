@@ -21,7 +21,7 @@ import Servant (FromHttpApiData (..), ToHttpApiData (..))
 
 type Address = Text
 
-data Currency = BTC | BCH | ETH deriving (Show, Eq, Generic)
+data Currency = BTC | BCH | ETH | XRP deriving (Show, Eq, Generic)
 
 $(deriveJSON defaultOptions ''Currency)
 instance ToSchema Currency
@@ -31,12 +31,14 @@ instance FromHttpApiData Currency
     parseUrlPiece "eth" = Right ETH
     parseUrlPiece "btc" = Right BTC
     parseUrlPiece "bch" = Right BCH
+    parseUrlPiece "xrp" = Right XRP
     parseUrlPiece _ = Left "Coin not supported"
 instance ToHttpApiData Currency
   where
     toUrlPiece ETH = "eth"
     toUrlPiece BTC = "btc"
     toUrlPiece BCH = "bch"
+    toUrlPiece XRP = "xrp"
 
 data Balance =
   Balance 
