@@ -7,6 +7,7 @@ import System.Process
 
 import qualified BTCApiSpec as BTC
 import qualified ETHApiSpec as ETH
+import qualified XRPApiSpec as XRP
 import qualified ParitySpec as Parity
 
 import qualified RippleSpec as Ripple
@@ -15,11 +16,9 @@ main :: IO ()
 main = do
     withParity $
         hspecWith defaultConfig ETH.spec
-    hspecWith defaultConfig specsWithoutMockServer
-    hspecWith defaultConfig specsWithoutMockServer2    
+    hspecWith defaultConfig specsWithoutMockServer    
     where
-        specsWithoutMockServer = BTC.spec >> Parity.spec
-        specsWithoutMockServer2 = Ripple.spec >> Parity.spec        
+        specsWithoutMockServer = BTC.spec >> XRP.spec >> Parity.spec >> Ripple.spec
 
 withParity :: IO () -> IO ()
 withParity action = 

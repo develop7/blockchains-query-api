@@ -15,6 +15,7 @@ module BlockchainsQueryApi.AppM
 import BlockchainsQueryApi.Domain
 import BlockchainsQueryApi.Haskoin
 import BlockchainsQueryApi.Parity
+import BlockchainsQueryApi.Ripple
 import BlockchainsQueryApi.Prelude
 
 import Data.String (String)
@@ -49,6 +50,7 @@ data BTConfig = BTConfig { port :: Integer
                          , haskoinBtcUri :: Maybe URI
                          , haskoinBchUri :: Maybe URI
                          , parityUri :: Maybe URI
+                         , rippleUri :: Maybe URI
                          } deriving (Show)
 
 
@@ -82,6 +84,7 @@ nodeForCurrency conf currency =
           BTC -> haskoin <$> haskoinBtcUri conf
           BCH -> haskoin <$> haskoinBchUri conf
           ETH -> parity <$> parityUri conf
+          XRP -> ripple <$> rippleUri conf
 
 loadBTConfig :: IO BTConfig
 loadBTConfig =
@@ -90,6 +93,7 @@ loadBTConfig =
            <*> var (parseUrl <=< nonempty) "BQ_BTC_NODE_URI" (def Nothing <> help "HTTP URI to reach the haskoin BTC interface")
            <*> var (parseUrl <=< nonempty) "BQ_BCH_NODE_URI" (def Nothing <> help "HTTP URI to reach the haskoin BCH interface")
            <*> var (parseUrl <=< nonempty) "BQ_ETH_NODE_URI" (def Nothing <> help "HTTP URI to reach the parity RPC interface")
+           <*> var (parseUrl <=< nonempty) "BQ_XRP_NODE_URI" (def Nothing <> help "HTTP URI to reach the rippled RPC interface")
 
 parseUrl :: String -> Either Env.Error (Maybe URI)
 parseUrl url = 

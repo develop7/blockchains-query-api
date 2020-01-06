@@ -1,10 +1,7 @@
  {-# LANGUAGE TemplateHaskell #-}
 
  module BlockchainsQueryApi.Ripple
-  ( getBalance
-  , RippleRequest
-  , RippleParams
-  , responseToBalance
+  ( ripple
   ) where
 
 import BlockchainsQueryApi.Prelude
@@ -13,7 +10,7 @@ import BlockchainsQueryApi.Domain
 
 import Data.Aeson.Lens
 
-import Control.Lens ((^?), (^..))
+import Control.Lens ((^?))
 
 import Network.URI
 
@@ -23,7 +20,7 @@ import Conduit (MonadThrow)
 
 import Data.String (String)
 
-import Data.Aeson (FromJSON (..), ToJSON (..), Value (..), encode, decode)
+import Data.Aeson (Value (..), encode)
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
@@ -47,8 +44,17 @@ data RippleParams =
 
 $(deriveJSON defaultOptions ''RippleParams )
 
-getBalance :: (MonadIO m, MonadThrow m) => Address -> URI -> m (Either Error Balance)
-getBalance address uri = do
+ripple :: (MonadIO m,  MonadThrow m) => URI -> Node m
+ripple uri = Node 
+                { nodeTransaction = panic "Transaction not implmented for Ripple nodes"
+                , nodeBalance = getBalance uri
+                , nodeCurrentBlock = panic "Current Block not implmented for Ripple nodes"
+                , nodeFeeEstimate = panic "Fee Estimates not implmented for Ripple nodes"
+                }
+
+
+getBalance :: (MonadIO m, MonadThrow m) => URI -> Address -> m (Either Error Balance)
+getBalance uri address = do
     request <- mkRequest
     let jsonRequest = setRequestBodyJSON body request
         requestWithHeader = setRequestHeader "Content-Type" ["application/json"] jsonRequest
@@ -62,16 +68,16 @@ getBalance address uri = do
 
         balanceOrFailure :: Value -> Either Error Balance
 
-        balanceOrFailure body =
-            maybeToEither (RPCError $ toS $ "Error decoding: " <> encode body) (responseToBalance body)
+        balanceOrFailure balanceBody =
+            maybeToEither (RPCError $ toS $ "Error decoding: " <> encode balanceBody) (responseToBalance balanceBody)
 
 responseToBalance :: Value -> Maybe Balance
 responseToBalance body = do 
     account_data <- body ^? key "result" . key "account_data"
     balance <- account_data ^? key "Balance" . _String
-    account <- account_data ^? key "Account" . _String
+    rippleAccount <- account_data ^? key "Account" . _String
     rBalanceNumeric <- fromIntegral <$> (readMaybe $ toS balance :: Maybe Integer)
-    pure $ Balance account rBalanceNumeric
+    pure $ Balance rippleAccount rBalanceNumeric
 
 buildBalanceRequest :: Address -> RippleRequest RippleParams
 buildBalanceRequest address =  
