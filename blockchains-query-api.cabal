@@ -88,6 +88,9 @@ test-suite blockchains-query-api-test
                      , aeson-qq
                      , network-uri
                      , process
+                     , web3
+                     , lens
+
 
   other-modules:       BTCApiSpec
                      , ETHApiSpec
